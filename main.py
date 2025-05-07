@@ -29,7 +29,7 @@ def send_line_alert(frame, track_id):
     filename = f"fall_{track_id}_{timestamp}.jpg"
     temp_dir = tempfile.gettempdir()
     filepath = os.path.join(temp_dir, filename)
-    
+
     print("📁 Saving image to:", filepath)
     cv2.imwrite(filepath, frame)
 
@@ -47,15 +47,8 @@ def send_line_alert(frame, track_id):
     data = {
         "to": LINE_USER_ID,
         "messages": [
-            {
-                "type": "text",
-                "text": message_text
-            },
-            {
-                "type": "image",
-                "originalContentUrl": image_url,
-                "previewImageUrl": image_url
-            }
+            {"type": "text", "text": message_text},
+            {"type": "image", "originalContentUrl": image_url, "previewImageUrl": image_url}
         ]
     }
 
@@ -69,13 +62,15 @@ def send_line_alert(frame, track_id):
         os.remove(filepath)
 
 # ========= YOLO + FALL DETECTION =========
-model = YOLO("best.pt")  # ใช้โมเดลของคุณเอง
-names = model.model.names
+model = YOLO("best.pt")  # โหลดโมเดล YOLO ที่เทรนไว้แล้ว
+names = model.model.names  # รายชื่อคลาสในโมเดล
 
-cap = cv2.VideoCapture('fall.mp4')  # หรือใส่ 0 เพื่อใช้กล้อง
+# 📹 เปิดวิดีโอจากไฟล์ หรือเปลี่ยนเป็นกล้องได้โดยใช้ cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('fall.mp4')  # ใช้ไฟล์วิดีโอ fall.mp4 ในการตรวจจับ  # หรือใส่ 0 เพื่อใช้กล้อง: cap = cv2.VideoCapture(0)
+
 cv2.namedWindow("Fall Detection")
 count = 0
-fall_alerts = {}
+fall_alerts = {}  # บันทึก Track ID ที่แจ้งเตือนแล้ว เพื่อไม่ส่งซ้ำ
 
 while True:
     ret, frame = cap.read()
@@ -84,10 +79,10 @@ while True:
 
     count += 1
     if count % 3 != 0:
-        continue
+        continue  # ประมวลผลทุก 3 เฟรม เพื่อลดโหลด
 
-    frame = cv2.resize(frame, (1020, 600))
-    results = model.track(frame, persist=True)
+    frame = cv2.resize(frame, (1020, 600))  # ปรับขนาดเฟรม
+    results = model.track(frame, persist=True)  # ตรวจจับ + ติดตามด้วย YOLOv8
 
     if results[0].boxes is not None and results[0].boxes.id is not None:
         boxes = results[0].boxes.xyxy.int().cpu().tolist()
@@ -99,17 +94,17 @@ while True:
             x1, y1, x2, y2 = box
             h = y2 - y1
             w = x2 - x1
-            thresh = h - w
+            thresh = h - w  # เช็คว่าคนล้มโดยดูว่า "นอน" (กว้างมากกว่าสูง)
 
             if thresh <= 0:
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)  # สีแดง = ล้ม
                 cvzone.putTextRect(frame, f"Fall ({track_id})", (x1, y1 - 10), 1, 1, (0, 0, 255), 2)
 
                 if track_id not in fall_alerts:
                     send_line_alert(frame, track_id)
                     fall_alerts[track_id] = count
             else:
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)  # สีเขียว = ปกติ
                 cvzone.putTextRect(frame, f"Person ({track_id})", (x1, y1 - 10), 1, 1, (0, 255, 0), 2)
 
     cv2.imshow("Fall Detection", frame)

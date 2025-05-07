@@ -1,3 +1,4 @@
 ultralytics
 cvzone
 opencv-python
+DI-line #ถ้าต้องการให้ส่งการเเจ้งเตือน

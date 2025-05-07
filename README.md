@@ -40,5 +40,6 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 ## Acknowledgments
 - [OpenCV](https://opencv.org/) for image processing capabilities."# OpenCV-LineBot" 
 
-## Add Line Fai
-      - https://line.me/R/ti/p/@898tvvrn
+## Add Line Bot Detection
+- [DI-Line] @898tvvrn
+- [Lilk-Line] https://line.me/R/ti/p/@898tvvrn
